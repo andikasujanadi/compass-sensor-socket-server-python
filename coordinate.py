@@ -89,6 +89,8 @@ def mouse_service():
     boundary = 200
     x0, y0 = init_x, init_y
     x, y = 0, 0
+    x_fix, y_fix = 0, 0
+    point_per_m = 1735
     pyautogui.moveTo(init_x, init_y)
     while True:
         x1, y1 = pyautogui.position()
@@ -111,8 +113,9 @@ def mouse_service():
 
         x += (x1 - x0)*round(math.cos(math.radians(angle)),15) + (y1 - y0)*round(math.sin(math.radians(angle)),15)
         y += (y1 - y0)*round(math.cos(math.radians(angle)),15) + (x1 - x0)*round(math.sin(math.radians(angle)),15)
+        x_fix, y_fix = x/point_per_m*100, -y*point_per_m*100
 
-        positionStr = 'X: ' + str(x).rjust(4) + ' Y: ' + str(y).rjust(4)
+        positionStr = 'X: ' + str(x_fix).rjust(4) + ' Y: ' + str(y_fix).rjust(4)
         print(positionStr, end='')
         print('\b' * len(positionStr), end='', flush=True)
         
