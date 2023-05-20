@@ -94,16 +94,20 @@ def mouse_service():
         x1, y1 = pyautogui.position()
         if x1 < (init_x-boundary):
             pyautogui.moveTo(init_x+boundary, y1)
-            x -= boundary*2
+            x -= (boundary*2+1)*round(math.cos(math.radians(angle)),15)
+            y -= (boundary*2+1)*round(math.sin(math.radians(angle)),15)
         elif x1 > (init_x+boundary):
             pyautogui.moveTo(init_x-boundary, y1)
-            x += boundary*2
+            x += (boundary*2+1)*round(math.cos(math.radians(angle)),15)
+            y += (boundary*2+1)*round(math.sin(math.radians(angle)),15)
         if y1 < (init_y-boundary):
             pyautogui.moveTo(x1, init_y+boundary)
-            y -= boundary*2
+            y -= (boundary*2+1)*round(math.cos(math.radians(angle)),15)
+            x -= (boundary*2+1)*round(math.sin(math.radians(angle)),15)
         elif y1 > (init_y+boundary):
             pyautogui.moveTo(x1, init_y-boundary)
-            y += boundary*2
+            y += (boundary*2+1)*round(math.cos(math.radians(angle)),15)
+            x += (boundary*2+1)*round(math.sin(math.radians(angle)),15)
 
         x += (x1 - x0)*round(math.cos(math.radians(angle)),15) + (y1 - y0)*round(math.sin(math.radians(angle)),15)
         y += (y1 - y0)*round(math.cos(math.radians(angle)),15) + (x1 - x0)*round(math.sin(math.radians(angle)),15)
