@@ -115,7 +115,7 @@ def mouse_service():
         y += (y1 - y0)*round(math.cos(math.radians(angle)),15) + (x1 - x0)*round(math.sin(math.radians(angle)),15)
         x_fix, y_fix = x/point_per_m*100, -y/point_per_m*100
 
-        positionStr = 'X: ' + str(x_fix).rjust(4) + ' Y: ' + str(y_fix).rjust(4)
+        positionStr = 'X: ' + str(x).rjust(4) + ' Y: ' + str(y).rjust(4)
         print(positionStr, end='')
         print('\b' * len(positionStr), end='', flush=True)
         
