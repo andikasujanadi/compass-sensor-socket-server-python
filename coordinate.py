@@ -3,6 +3,7 @@ import socket
 import pyautogui
 import math
 import requests
+import threading
 
 app = Flask(__name__)
 use_socket = False
@@ -42,6 +43,7 @@ def mouse():
     return 'ok'
         
 def mouse_service():
+    print('mouse service is on!')
     global robot_id
     global angle
     if use_socket:
@@ -107,5 +109,8 @@ def to3d(number):
     return f'asd{value}'
 
 if __name__ == '__main__':
+    t1 = threading.Thread(target=start_server)
+    t1.start()
+    t1.join()
     app.run(debug=True, host='0.0.0.0', port=5000)
     
