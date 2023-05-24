@@ -5,17 +5,16 @@ import math
 import requests
 
 app = Flask(__name__)
+use_socket = False
 
-server = socket.socket()
-print ("Socket successfully created")
-ip_addr = '127.0.0.1'
-port = 12345
+if use_socket:
+    socket_client = socket.socket()
+    ip_addr = '127.0.0.1'
+    port = 12345
+    socket_client.connect((ip_addr, port))
+    print ("Conected to the server")
 angle = 0
-
-max_client = 3
-clients = []
-for i in range(max_client):
-    clients.append(None)
+robot_id = 0
 
 @app.route('/')
 def hello_world():
@@ -23,16 +22,11 @@ def hello_world():
 
 @app.route('/robot<int:x>/<int:r>')
 def robot(x,r):
+    global robot_id
     global angle
-    if x==1:
-        angle = r
-    if clients[x]:
-        try:
-            clients[x].send(toByte(str(r)))
-            return f'Robot {x} {r} deg\n{clients[x]}' 
-        except:
-            clients[x]=None
-    return f'hmmm?'
+    robot_id = x
+    angle = r
+    return f'angle'
 
 @app.route('/start')
 def start_server():
@@ -48,7 +42,11 @@ def mouse():
     return 'ok'
         
 def mouse_service():
+    global robot_id
     global angle
+    if use_socket:
+        global socket_client
+
     init_x=960
     init_y=540
     boundary = 200
@@ -57,6 +55,7 @@ def mouse_service():
     x_fix, y_fix = 0, 0
     point_per_m = 1735
     pyautogui.moveTo(init_x, init_y)
+
     while True:
         x1, y1 = pyautogui.position()
         if x1 < (init_x-boundary):
@@ -80,20 +79,32 @@ def mouse_service():
         y += (y1 - y0)*round(math.cos(math.radians(angle)),15) + (x1 - x0)*round(math.sin(math.radians(angle)),15)
         x_fix, y_fix = x/point_per_m*100, -y/point_per_m*100
 
-        positionStr = 'X: ' + str(x_fix).rjust(4) + ' Y: ' + str(y_fix).rjust(4)
-        print(positionStr, end='')
-        print('\b' * len(positionStr), end='', flush=True)
+        positionStr = 'X: ' + to3d(x_fix).rjust(4) + ' Y: ' + to3d(y_fix).rjust(4)
+        if 0:
+            print(positionStr, end='')
+            print('\b' * len(positionStr), end='', flush=True)
         
         x0, y0 = x1, y1
 
-def arr_in_str(arr,s):
-    for a in arr:
-        if a not in s:
-            return False
-    return True
+        if robot_id != 0:
+            output = f'R{robot_id}{to3d(angle)}{"-" if x_fix<0 else "+"}{to3d(x_fix)}{"-" if y_fix<0 else "+"}{to3d(y_fix)}'
+            print(output, end='')
+            print('\b' * len(output), end='', flush=True)
+            if use_socket:
+                socket_client.send(output.encode())
+            pass
 
-def toByte(s):
-    return s.encode('utf-8')
+def to3d(number):
+    if number<0:
+        number*=-1
+    value = str(int(number))
+    if len(value)==3:
+        return value
+    if len(value)==2:
+        return f'0{value}'
+    if len(value)==1:
+        return f'00{value}'
+    return f'asd{value}'
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
