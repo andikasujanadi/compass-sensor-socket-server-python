@@ -2,6 +2,7 @@ from flask import Flask
 import socket
 import pyautogui
 import math
+import requests
 
 app = Flask(__name__)
 
@@ -33,54 +34,18 @@ def robot(x,r):
             clients[x]=None
     return f'hmmm?'
 
-@app.route('/clients')
-def count_clients():
-    global clients
-    sum = 0
-    for i in clients:
-        if i:
-            sum+=1
-    return f'{sum} client(s) connected right now'
-
-@app.route('/server')
-def serverku():
-    main()
+@app.route('/start')
+def start_server():
+    try:
+        requests.get('http://127.0.0.1:5000/mouse',verify=False, timeout=0.1)
+    except:
+        pass
     return 'ok'
 
 @app.route('/mouse')
 def mouse():
     mouse_service()
     return 'ok'
-
-def main():
-    global clients
-    global max_client
-    loop = True
-    server.bind(('', port))        
-    print ("socket binded to %s" %(port))
-    
-    server.listen(5)    
-    print ("socket is listening")
-    
-    while loop:
-        c, addr = server.accept()
-        print ('Got connection from', addr )
-        fingerprint = c.recv(1024).decode()
-        print(f'in >>> {fingerprint}')
-        if arr_in_str(['robot','krsbipolibankerenjos'], fingerprint):
-            id = -1
-            try:
-                id = int(fingerprint[5])
-            except:
-                id = -1
-            if id >=0 and id<=max_client and not clients[id]:
-                c.send(f'Connected to KRSBI-B Poliban Server, welcome Robot {id}'.encode())
-                clients[id] = c
-                print(f'robot {id} initialize')
-            else:
-                c.send(toByte(f'you cannot connect to this server, robot {id} already initialize'))
-        else:
-            c.send(f'access denied')
         
 def mouse_service():
     global angle
