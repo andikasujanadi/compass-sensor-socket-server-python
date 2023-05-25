@@ -1,21 +1,12 @@
 from flask import Flask
-import socket
-import pyautogui
-import math
-import requests
 import threading
 
 app = Flask(__name__)
-use_socket = False
 
-if use_socket:
-    socket_client = socket.socket()
-    ip_addr = '127.0.0.1'
-    port = 12345
-    socket_client.connect((ip_addr, port))
-    print ("Conected to the server")
 angle = 0
 robot_id = 0
+for_socket = ''
+loop = True
 
 @app.route('/')
 def hello_world():
@@ -29,36 +20,42 @@ def robot(x,r):
     angle = r
     return f'angle'
 
-@app.route('/start')
-def start_server():
-    try:
-        requests.get('http://127.0.0.1:5000/mouse',verify=False, timeout=0.1)
-    except:
-        pass
-    return 'ok'
-
-@app.route('/mouse')
-def mouse():
-    mouse_service()
-    return 'ok'
+def socket_client():
+    import socket
+    global loop
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(('127.0.0.1', 12345))
+    print('socket client is on!')
+    last_data = ''
+    while loop:
+        if len(for_socket)>0 and for_socket != last_data:
+            client.send(f'{for_socket}'.encode())
+            from_server = client.recv(4096)
+            print (from_server.decode())
+            if from_server=='force stop':
+                loop = False
+            last_data = for_socket
+    client.close()
         
 def mouse_service():
+    import pyautogui
+    import math
     print('mouse service is on!')
     global robot_id
     global angle
-    if use_socket:
-        global socket_client
+    global loop
+    global for_socket
 
     init_x=960
     init_y=540
-    boundary = 200
+    boundary = 400
     x0, y0 = init_x, init_y
     x, y = 0, 0
     x_fix, y_fix = 0, 0
     point_per_m = 1735
     pyautogui.moveTo(init_x, init_y)
 
-    while True:
+    while loop:
         x1, y1 = pyautogui.position()
         if x1 < (init_x-boundary):
             pyautogui.moveTo(init_x+boundary, y1)
@@ -88,13 +85,10 @@ def mouse_service():
         
         x0, y0 = x1, y1
 
-        if robot_id != 0:
-            output = f'R{robot_id}{to3d(angle)}{"-" if x_fix<0 else "+"}{to3d(x_fix)}{"-" if y_fix<0 else "+"}{to3d(y_fix)}'
-            print(output, end='')
-            print('\b' * len(output), end='', flush=True)
-            if use_socket:
-                socket_client.send(output.encode())
-            pass
+        if True:
+            for_socket = f'R{robot_id}{to3d(angle)}{"-" if x_fix<0 else "+"}{to3d(x_fix)}{"-" if y_fix<0 else "+"}{to3d(y_fix)}'
+            print(for_socket, end='')
+            print('\b' * len(for_socket), end='', flush=True)
 
 def to3d(number):
     if number<0:
@@ -109,8 +103,11 @@ def to3d(number):
     return f'asd{value}'
 
 if __name__ == '__main__':
-    t1 = threading.Thread(target=start_server)
-    t1.start()
-    t1.join()
-    app.run(debug=True, host='0.0.0.0', port=5000)
-    
+    try:
+        t1 = threading.Thread(target=socket_client)
+        t2 = threading.Thread(target=mouse_service)
+        t1.start()
+        t2.start()
+        app.run(debug=True, host='0.0.0.0', port=5000)
+    except:
+        loop = False
