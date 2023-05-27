@@ -4,8 +4,8 @@ import threading
 app = Flask(__name__)
 
 angle = 0
-robot_id = 0
-for_socket = ''
+robot_id = 1
+for_socket = 'R1oke'
 loop = True
 
 @app.route('/')
@@ -19,23 +19,6 @@ def robot(x,r):
     robot_id = x
     angle = r
     return f'angle'
-
-def socket_client():
-    import socket
-    global loop
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(('127.0.0.1', 12345))
-    print('socket client is on!')
-    last_data = ''
-    while loop:
-        if len(for_socket)>0 and for_socket != last_data:
-            client.send(f'{for_socket}'.encode())
-            from_server = client.recv(4096)
-            print (from_server.decode())
-            if from_server=='force stop':
-                loop = False
-            last_data = for_socket
-    client.close()
         
 def mouse_service():
     import pyautogui
@@ -55,7 +38,15 @@ def mouse_service():
     point_per_m = 1735
     pyautogui.moveTo(init_x, init_y)
 
-    while loop:
+    import socket
+    global loop
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(('127.0.0.1', 12345))
+    client.send('sensor1'.encode())
+    print('socket client is on!')
+    last_data = ''
+
+    while True:
         x1, y1 = pyautogui.position()
         if x1 < (init_x-boundary):
             pyautogui.moveTo(init_x+boundary, y1)
@@ -87,8 +78,19 @@ def mouse_service():
 
         if True:
             for_socket = f'R{robot_id}{to3d(angle)}{"-" if x_fix<0 else "+"}{to3d(x_fix)}{"-" if y_fix<0 else "+"}{to3d(y_fix)}'
-            print(for_socket, end='')
-            print('\b' * len(for_socket), end='', flush=True)
+            # print(for_socket, end='')
+            # print('\b' * len(for_socket), end='', flush=True)
+        
+        if len(for_socket)>0 and for_socket != last_data:
+        # if False:
+            print(for_socket)
+            # client.send(f'{for_socket}'.encode())
+            client.send(f'sensor1'.encode())
+            # from_server = client.recv(4096)
+            # print (f'###{from_server.decode()}')
+            # if from_server=='init_fc':
+            #     loop = False
+            last_data = for_socket
 
 def to3d(number):
     if number<0:
@@ -104,10 +106,10 @@ def to3d(number):
 
 if __name__ == '__main__':
     try:
-        t1 = threading.Thread(target=socket_client)
-        t2 = threading.Thread(target=mouse_service)
+        t1 = threading.Thread(target=mouse_service)
+        # t2 = threading.Thread(target=socket_client)
         t1.start()
-        t2.start()
+        # t2.start()
         app.run(debug=True, host='0.0.0.0', port=5000)
     except:
-        loop = False
+        loop = True
